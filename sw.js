@@ -1,6 +1,6 @@
 // Cache de l'app pour qu'elle fonctionne hors ligne.
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'jessy-sport-' + VERSION;
 const FILES = [
   './',

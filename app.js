@@ -102,6 +102,34 @@ function volume(sess) {
 
 const countSets = (sess) => sess.exercises.reduce((n, e) => n + e.sets.length, 0);
 
+/* ---------- Fenêtres de confirmation intégrées ---------- */
+
+function dialog(msg, { ok = 'OK', cancel = null, danger = false } = {}) {
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal';
+    wrap.innerHTML = `
+      <div class="sheet" role="dialog" aria-modal="true">
+        <p>${esc(msg)}</p>
+        <div class="row">
+          ${cancel ? `<button data-m="0">${esc(cancel)}</button>` : ''}
+          <button data-m="1" class="${danger ? 'danger-fill' : 'primary'}">${esc(ok)}</button>
+        </div>
+      </div>`;
+    wrap.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-m]');
+      if (!b) return;
+      e.stopPropagation();
+      wrap.remove();
+      resolve(b.dataset.m === '1');
+    });
+    document.body.appendChild(wrap);
+    wrap.querySelector('[data-m="1"]').focus();
+  });
+}
+const ask = (msg) => dialog(msg, { ok: 'Confirmer', cancel: 'Annuler', danger: true });
+const notify = (msg) => dialog(msg);
+
 /* ---------- Navigation ---------- */
 
 const $app = document.getElementById('app');
@@ -277,7 +305,7 @@ function startSession(program) {
   go('session');
 }
 
-function finishSession() {
+async function finishSession() {
   const a = S.active;
   const exercises = a.exercises
     .map((ex) => ({
@@ -292,13 +320,13 @@ function finishSession() {
     .filter((ex) => ex.sets.length);
 
   if (!exercises.length) {
-    if (!confirm('Aucune série cochée. Abandonner la séance sans l\'enregistrer ?')) return;
+    if (!(await ask('Aucune série cochée. Abandonner la séance sans l\'enregistrer ?'))) return;
     S.active = null;
     save();
     return go('programs');
   }
   const undone = a.exercises.reduce((n, e) => n + e.sets.filter((s) => !s.done).length, 0);
-  if (undone && !confirm(`${undone} série${undone > 1 ? 's' : ''} non cochée${undone > 1 ? 's' : ''} ne ser${undone > 1 ? 'ont' : 'a'} pas enregistrée${undone > 1 ? 's' : ''}. Terminer quand même ?`)) return;
+  if (undone && !(await ask(`${undone} série${undone > 1 ? 's' : ''} non cochée${undone > 1 ? 's' : ''} ne ser${undone > 1 ? 'ont' : 'a'} pas enregistrée${undone > 1 ? 's' : ''}. Terminer quand même ?`))) return;
 
   const sess = { id: a.id, programId: a.programId, programName: a.programName, start: a.start, end: Date.now(), exercises };
   S.sessions.unshift(sess);
@@ -377,16 +405,16 @@ async function exportData() {
 
 function importData(file) {
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const d = JSON.parse(reader.result);
       if (!Array.isArray(d.programs) || !Array.isArray(d.sessions)) throw new Error('format');
-      if (!confirm(`Remplacer les données actuelles par cette sauvegarde (${d.programs.length} programmes, ${d.sessions.length} séances) ?`)) return;
+      if (!(await ask(`Remplacer les données actuelles par cette sauvegarde (${d.programs.length} programmes, ${d.sessions.length} séances) ?`))) return;
       S = { programs: d.programs, sessions: d.sessions, active: d.active || null };
       save();
       go('history');
     } catch (e) {
-      alert('Fichier invalide. Choisis un fichier exporté depuis Jessy Sport.');
+      notify('Fichier invalide. Choisis un fichier exporté depuis Jessy Sport.');
     }
   };
   reader.readAsText(file);
@@ -394,7 +422,7 @@ function importData(file) {
 
 /* ---------- Événements ---------- */
 
-document.addEventListener('click', (ev) => {
+document.addEventListener('click', async (ev) => {
   const el = ev.target.closest('[data-act]');
   if (!el || el.disabled) return;
   const act = el.dataset.act;
@@ -424,22 +452,22 @@ document.addEventListener('click', (ev) => {
       d.exercises = d.exercises
         .map((x) => ({ ...x, name: x.name.trim(), sets: Math.min(20, Math.max(1, parseInt(x.sets, 10) || 1)) }))
         .filter((x) => x.name);
-      if (!d.name) return alert('Donne un nom au programme.');
-      if (!d.exercises.length) return alert('Ajoute au moins un exercice avec un nom.');
+      if (!d.name) return notify('Donne un nom au programme.');
+      if (!d.exercises.length) return notify('Ajoute au moins un exercice avec un nom.');
       const idx = S.programs.findIndex((p) => p.id === d.id);
       if (idx >= 0) S.programs[idx] = d; else S.programs.push(d);
       save();
       return go('programs');
     }
     case 'delprog':
-      if (!confirm(`Supprimer le programme « ${d.name} » ? L'historique des séances est conservé.`)) return;
+      if (!(await ask(`Supprimer le programme « ${d.name} » ? L'historique des séances est conservé.`))) return;
       S.programs = S.programs.filter((p) => p.id !== d.id);
       save();
       return go('programs');
 
     case 'start':
     case 'quick': {
-      if (S.active && !confirm('Une séance est déjà en cours. La remplacer ? (elle ne sera pas enregistrée)')) return;
+      if (S.active && !(await ask('Une séance est déjà en cours. La remplacer ? (elle ne sera pas enregistrée)'))) return;
       return startSession(act === 'start' ? S.programs.find((p) => p.id === id) : null);
     }
     case 'toggle': {
@@ -469,24 +497,24 @@ document.addEventListener('click', (ev) => {
     }
     case 'delset': S.active.exercises[e].sets.pop(); save(); return render();
     case 'rmsessex':
-      if (!confirm(`Retirer « ${S.active.exercises[e].name} » de cette séance ?`)) return;
+      if (!(await ask(`Retirer « ${S.active.exercises[e].name} » de cette séance ?`))) return;
       S.active.exercises.splice(e, 1); save(); return render();
     case 'addsessex': {
       const name = document.getElementById('newExName').value.trim();
       const type = document.getElementById('newExType').value;
-      if (!name) return alert('Indique le nom de l\'exercice.');
+      if (!name) return notify('Indique le nom de l\'exercice.');
       S.active.exercises.push({ name, type, sets: [prefill(name, type, 0)] });
       save();
       return render();
     }
     case 'finish': return finishSession();
     case 'abandon':
-      if (!confirm('Abandonner la séance ? Rien ne sera enregistré.')) return;
+      if (!(await ask('Abandonner la séance ? Rien ne sera enregistré.'))) return;
       S.active = null; save(); return go('programs');
 
     case 'detail': return go('detail', { detailId: id });
     case 'delsess':
-      if (!confirm('Supprimer définitivement cette séance ?')) return;
+      if (!(await ask('Supprimer définitivement cette séance ?'))) return;
       S.sessions = S.sessions.filter((x) => x.id !== id); save(); return go('history');
     case 'export': return exportData();
     case 'import': return document.getElementById('importFile').click();
