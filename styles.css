@@ -1,0 +1,154 @@
+:root {
+  --bg: #0f0f14;
+  --card: #1a1a22;
+  --card-2: #24242e;
+  --text: #f4f4f6;
+  --muted: #9a9aa8;
+  --accent: #ff6a3d;
+  --accent-text: #ffffff;
+  --ok: #2fbf71;
+  --danger: #ff4d4f;
+  --border: #2c2c38;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --card-2: #f0f0f4;
+    --text: #111116;
+    --muted: #6b6b78;
+    --border: #e1e1e8;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 88px);
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, select, textarea { -webkit-user-select: text; user-select: text; }
+
+h1 { font-size: 30px; margin: 8px 0 16px; letter-spacing: -0.5px; }
+h2 { font-size: 20px; margin: 24px 0 10px; }
+h3 { font-size: 17px; margin: 0; }
+.muted { color: var(--muted); font-size: 14px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card.tap { cursor: pointer; }
+.card.tap:active { background: var(--card-2); }
+
+button {
+  font: inherit;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: var(--card-2);
+  color: var(--text);
+  cursor: pointer;
+}
+button:active { opacity: 0.7; }
+button.primary { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+button.block { display: block; width: 100%; margin-top: 10px; }
+button.small { padding: 8px 12px; font-size: 14px; }
+button.icon { padding: 8px 10px; min-width: 40px; }
+button.link { background: none; color: var(--accent); padding: 8px 0; }
+button.danger { background: none; color: var(--danger); }
+
+input, select {
+  font: inherit;
+  font-size: 16px; /* évite le zoom automatique d'iOS */
+  color: var(--text);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  min-width: 0;
+}
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+
+/* Édition d'un programme */
+.ex-edit .grid { display: grid; grid-template-columns: 1fr 90px; gap: 8px; margin-top: 8px; }
+.ex-edit .actions { display: flex; gap: 6px; margin-top: 8px; }
+
+/* Séance en cours */
+.session-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  margin: 0 -16px 8px;
+  padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
+  margin-top: calc(-1 * env(safe-area-inset-top) - 12px);
+  border-bottom: 1px solid var(--border);
+}
+.timer { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; }
+.set {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 48px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.set.one { grid-template-columns: 28px 1fr 48px; }
+.set .n { color: var(--muted); text-align: center; font-weight: 600; }
+.set input { text-align: center; padding: 10px 4px; }
+.set-head { font-size: 12px; color: var(--muted); text-transform: uppercase; margin-top: 10px; }
+.set-head span { text-align: center; }
+.check {
+  width: 48px; height: 44px; padding: 0;
+  font-size: 20px; font-weight: 700;
+  border: 2px solid var(--border);
+  background: transparent; color: var(--muted);
+}
+.check.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+.set.done input { border-color: var(--ok); }
+.last { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.set-btns { display: flex; gap: 8px; margin-top: 10px; }
+.set-btns button { flex: 1; }
+
+/* Historique */
+.stats { display: flex; gap: 16px; margin-top: 6px; font-size: 14px; color: var(--muted); }
+.stats b { color: var(--text); }
+.empty { text-align: center; color: var(--muted); padding: 40px 0; }
+
+/* Barre d'onglets */
+#tabs {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10;
+}
+#tabs button {
+  flex: 1;
+  background: none;
+  border-radius: 0;
+  padding: 10px 4px 8px;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+#tabs button .ico { font-size: 22px; line-height: 1; }
+#tabs button.on { color: var(--accent); }
+#tabs button.live .ico { animation: pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity: 0.4; } }
